@@ -1,0 +1,97 @@
+# ====================================================================
+# 1. OS & Editor (운영체제 및 에디터 공통)
+# ====================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ====================================================================
+# 2. Environment Variables & Logs (환경변수 및 로그)
+# ====================================================================
+# 보안상 Git에 올라가면 안 되는 파일들
+.env
+.env.*
+!.env.example
+!.env.sample
+
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ====================================================================
+# 3. Node.js (React TS & NestJS 공통)
+# ====================================================================
+node_modules/
+dist/
+build/
+coverage/
+
+# Caches
+.npm
+.eslintcache
+.stylelintcache
+.tsbuildinfo
+
+# ====================================================================
+# 4. React (TypeScript) Specific
+# ====================================================================
+# pnp (Plug'n'Play)
+.pnp.*
+
+# ====================================================================
+# 5. NestJS Specific
+# ====================================================================
+# Nest CLI compile cache
+.nest/
+
+# ====================================================================
+# 6. Python Specific
+# ====================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments (가상환경)
+venv/
+.venv/
+env/
+ENV/
+miniforge3/
+anaconda3/
+
+# Package Distribution
+*.egg-info/
+.eggs/
+.egg
+dist/
+build/
+wheels/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / Coverage / Lint cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+
+# Jupyter Notebook (AI/Data 분석용)
+.ipynb_checkpoints/
