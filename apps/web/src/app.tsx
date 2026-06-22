@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { SLIDE_SCRIPT_MAX_LENGTH } from "@ai-ppt/shared";
+import { PresenterView } from "./features/presenter/presenter-view";
 import { DEMO_DECK_ID, DEMO_SLIDES } from "./features/scripts/sample-deck";
 import { useSlideKeywords } from "./features/scripts/use-slide-keywords";
 import { useSlideScripts } from "./features/scripts/use-slide-scripts";
@@ -20,6 +21,7 @@ function formatUpdatedAt(value: string): string {
 }
 
 export function App() {
+  const [viewMode, setViewMode] = useState<"prep" | "presenter">("prep");
   const [selectedSlideId, setSelectedSlideId] = useState(DEMO_SLIDES[0].slideId);
   const selectedSlide = DEMO_SLIDES.find((slide) => slide.slideId === selectedSlideId) ?? DEMO_SLIDES[0];
   const {
@@ -51,6 +53,22 @@ export function App() {
     () => DEMO_SLIDES.filter((slide) => Boolean(scriptsBySlideId[slide.slideId])).length,
     [scriptsBySlideId]
   );
+
+  if (viewMode === "presenter") {
+    return (
+      <main className="presenter-shell">
+        <div className="mode-switcher" aria-label="보기 전환">
+          <button type="button" onClick={() => setViewMode("prep")}>
+            준비
+          </button>
+          <button className="is-active" type="button" onClick={() => setViewMode("presenter")}>
+            발표
+          </button>
+        </div>
+        <PresenterView slides={DEMO_SLIDES} keywordsBySlideId={keywordsBySlideId} />
+      </main>
+    );
+  }
 
   return (
     <main className="app-shell">
@@ -92,9 +110,19 @@ export function App() {
             <p>슬라이드 {selectedSlide.slideNumber}</p>
             <h1 id="script-title">{selectedSlide.title}</h1>
           </div>
-          <div className="script-status">
-            <span>{currentScript ? `v${currentScript.revision}` : "새 스크립트"}</span>
-            <strong>{currentScript ? formatDuration(currentScript.estimatedDurationSeconds) : "0:00"}</strong>
+          <div className="header-actions">
+            <div className="mode-switcher" aria-label="보기 전환">
+              <button className="is-active" type="button" onClick={() => setViewMode("prep")}>
+                준비
+              </button>
+              <button type="button" onClick={() => setViewMode("presenter")}>
+                발표
+              </button>
+            </div>
+            <div className="script-status">
+              <span>{currentScript ? `v${currentScript.revision}` : "새 스크립트"}</span>
+              <strong>{currentScript ? formatDuration(currentScript.estimatedDurationSeconds) : "0:00"}</strong>
+            </div>
           </div>
         </header>
 
