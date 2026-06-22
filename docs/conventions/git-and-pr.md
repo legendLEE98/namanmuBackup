@@ -2,6 +2,7 @@
 
 이 문서는 브랜치, 커밋, PR 작성 기준을 정리한다.
 필수 규칙과 충돌하면 `AGENTS.md`를 우선한다.
+Jira 추적 규칙은 [docs/conventions/jira.md](jira.md)를 따른다.
 
 ## Git 워크플로
 
