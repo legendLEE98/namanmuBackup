@@ -1,0 +1,33 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.slide-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  color: #f8fafc;
+  background: #1b2634;
+}
+
+.page-rail {
+  align-items: center;
+  padding: 18px 14px;
+}
+
+.add-page-button {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid #496177;
+  border-radius: 8px;
+  color: #17202a;
+  background: #ffd166;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+}

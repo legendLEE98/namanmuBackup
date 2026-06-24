@@ -1,0 +1,65 @@
+.top-editor-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 8px 10px;
+  border: 1px solid #273344;
+  border-radius: 8px;
+  color: #dbe5f1;
+  background: #1f2937;
+  box-shadow: 0 16px 32px rgba(21, 33, 46, 0.16);
+}
+
+.tool-strip,
+.toolbar-group,
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tool-strip {
+  padding-right: 10px;
+  border-right: 1px solid #3c4b5f;
+}
+
+.tool-button,
+.toolbar-actions button {
+  display: grid;
+  place-items: center;
+  min-width: 54px;
+  height: 34px;
+  border: 1px solid #46586d;
+  border-radius: 6px;
+  color: #dbe5f1;
+  background: #2a3748;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.tool-button.is-active {
+  border-color: #7ab7ff;
+  color: #ffffff;
+  background: #1976d2;
+}
+
+.toolbar-group {
+  padding: 0 10px;
+  border-right: 1px solid #3c4b5f;
+}
+
+.toolbar-group span {
+  color: #aebbd0;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.toolbar-actions {
+  margin-left: auto;
+}
+
+.toolbar-actions button {
+  min-width: 54px;
+  font-size: 12px;
+}

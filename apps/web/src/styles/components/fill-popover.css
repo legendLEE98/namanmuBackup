@@ -1,0 +1,63 @@
+.toolbar-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 168px;
+}
+
+.toolbar-swatches button {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #1f2937;
+  border-radius: 50%;
+}
+
+.toolbar-swatches button.is-selected {
+  border-color: #ffffff;
+  outline: 2px solid #7ab7ff;
+}
+
+.fill-popover-anchor {
+  position: relative;
+}
+
+.fill-chip {
+  display: block;
+  width: 32px;
+  height: 24px;
+  border: 2px solid #111827;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+}
+
+.color-palette-popover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 10px);
+  left: 0;
+  display: grid;
+  gap: 10px;
+  width: 236px;
+  padding: 12px;
+  border: 1px solid #46586d;
+  border-radius: 8px;
+  background: #1f2937;
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.34);
+}
+
+.opacity-control {
+  display: grid;
+  grid-template-columns: 58px minmax(112px, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+}
+
+.opacity-control input {
+  accent-color: #7ab7ff;
+}
+
+.opacity-control strong {
+  color: #ffffff;
+  font-size: 12px;
+  text-align: right;
+}

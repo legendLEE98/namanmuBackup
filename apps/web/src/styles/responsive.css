@@ -1,0 +1,104 @@
+@media (max-width: 980px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .slide-rail {
+    padding: 18px;
+  }
+
+  .slide-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-canvas {
+    min-height: 340px;
+  }
+}
+
+@media (max-width: 640px) {
+  .slide-list {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-surface {
+    padding: 20px;
+  }
+
+  .editor-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions,
+  .presenter-topbar,
+  .timer-cluster {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .editor-header h1 {
+    font-size: 26px;
+  }
+
+  .script-status {
+    justify-content: flex-start;
+  }
+
+  .preview-canvas {
+    min-height: 260px;
+    padding: 28px;
+  }
+
+  .editable-preview-canvas {
+    min-height: 320px;
+    padding: 16px;
+  }
+
+  .preview-canvas h2 {
+    font-size: 34px;
+  }
+
+  .script-editor {
+    min-height: 460px;
+    padding: 16px;
+  }
+
+  .keyword-panel {
+    padding: 16px;
+  }
+
+  .keyword-form {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .editor-actions button {
+    min-width: 0;
+  }
+
+  .presenter-shell {
+    padding: 16px;
+  }
+
+  .presenter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .presenter-canvas {
+    min-height: 320px;
+    padding: 28px;
+  }
+
+  .presenter-canvas h2 {
+    font-size: 36px;
+  }
+}
