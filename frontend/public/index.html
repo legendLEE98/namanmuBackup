@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prompt Presentation Studio</title>
+    <link rel="icon" type="image/png" href="/brand-icon.png" />
+    <link rel="apple-touch-icon" href="/brand-icon.png" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="generator-panel" aria-label="PPT 생성">
+        <div class="panel-title">
+          <h1><img class="brand-mark" src="/brand-icon.png" alt="" />Prompt Presentation Studio</h1>
+          <p>프롬프트를 편집 가능한 발표자료 JSON으로 생성합니다.</p>
+        </div>
+
+        <form id="generationForm" class="generation-form">
+          <label class="field field-wide">
+            <span>발표 주제 / 요구사항</span>
+            <textarea id="prompt" name="prompt" rows="4" required>AI 기반 사내 지식 검색 도입 전략을 임원진에게 설득하는 발표</textarea>
+          </label>
+
+          <label class="field">
+            <span>대상 청중</span>
+            <input id="audience" name="audience" value="임원진과 팀 리더" />
+          </label>
+
+          <label class="field">
+            <span>발표 시간</span>
+            <input id="durationMinutes" name="durationMinutes" type="number" min="1" max="120" value="12" />
+          </label>
+
+          <label class="field">
+            <span>슬라이드 수</span>
+            <input id="slideCount" name="slideCount" type="number" min="3" max="12" value="6" />
+          </label>
+
+          <label class="field">
+            <span>톤앤매너</span>
+            <select id="tone" name="tone">
+              <option value="professional">Professional</option>
+              <option value="simple">Simple</option>
+              <option value="persuasive">Persuasive</option>
+              <option value="educational">Educational</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>언어</span>
+            <select id="language" name="language">
+              <option value="ko">한국어</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>템플릿</span>
+            <select id="templateId" name="templateId">
+              <option value="executive">Executive Focus</option>
+              <option value="clarity">Clarity Lab</option>
+              <option value="pitch">Pitch Room</option>
+            </select>
+          </label>
+
+          <label class="field field-wide">
+            <span>참고자료</span>
+            <textarea id="referenceText" name="referenceText" rows="3" placeholder="요약, 메모, 회의록, 숫자 자료를 붙여넣으세요."></textarea>
+          </label>
+
+          <label class="file-field">
+            <input id="referenceFile" type="file" accept=".txt,.md,.csv,.json" />
+            <span>참고자료 파일 불러오기</span>
+          </label>
+
+          <button class="primary-action" type="submit">발표자료 생성</button>
+        </form>
+
+        <div id="generationStatus" class="status-panel" hidden>
+          <div class="status-row">
+            <strong id="statusStep">Queued</strong>
+            <span id="statusPercent">0%</span>
+          </div>
+          <div class="progress-track"><div id="progressFill"></div></div>
+        </div>
+      </section>
+
+      <section id="editorPanel" class="editor-panel" aria-label="PPT 편집기" hidden>
+        <aside class="slides-pane">
+          <div class="pane-header">
+            <h2>Slides</h2>
+            <button id="addSlideBtn" class="small-button" type="button">Add</button>
+          </div>
+          <div id="slidesList" class="slides-list"></div>
+        </aside>
+
+        <section class="stage-pane">
+          <div class="editor-toolbar">
+            <div class="tool-group">
+              <button id="undoBtn" class="icon-button" type="button" title="Undo">↶</button>
+              <button id="redoBtn" class="icon-button" type="button" title="Redo">↷</button>
+              <button id="addTextBtn" class="tool-button" type="button">Text</button>
+              <button id="addShapeBtn" class="tool-button" type="button">Shape</button>
+              <button id="addChartBtn" class="tool-button" type="button">Chart</button>
+            </div>
+            <div class="tool-group">
+              <button id="saveBtn" class="tool-button" type="button">Save</button>
+              <button id="exportPptxBtn" class="tool-button" type="button">PPTX</button>
+              <button id="exportPngBtn" class="tool-button" type="button">PNG</button>
+              <button id="exportPdfBtn" class="tool-button" type="button">PDF</button>
+              <button id="exportJsonBtn" class="tool-button" type="button">JSON</button>
+            </div>
+          </div>
+
+          <div class="canvas-wrap">
+            <canvas id="slideCanvas" width="1280" height="720"></canvas>
+          </div>
+        </section>
+
+        <aside class="properties-pane">
+          <div class="pane-header">
+            <h2>Inspector</h2>
+            <button id="deleteObjectBtn" class="small-button danger" type="button">Delete</button>
+          </div>
+          <div id="propertiesPanel" class="properties-panel"></div>
+          <div id="scriptPanel" class="script-panel"></div>
+          <div id="suggestionsPanel" class="suggestions-panel"></div>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

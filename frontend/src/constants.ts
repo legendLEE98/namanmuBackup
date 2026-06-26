@@ -1,0 +1,73 @@
+export const SLIDE = { width: 1280, height: 720 };
+export const HISTORY_LIMIT = 50;
+
+export const SHAPE_TOOLS = [
+  ["rect", "□"],
+  ["roundRect", "▢"],
+  ["ellipse", "○"],
+  ["triangle", "△"],
+  ["rightTriangle", "◺"],
+  ["diamond", "◇"],
+  ["pentagon", "⬟"],
+  ["hexagon", "⬡"],
+  ["octagon", "⯃"],
+  ["parallelogram", "▱"],
+  ["trapezoid", "▰"],
+  ["chevron", "⌁"],
+  ["arrowRight", "→"],
+  ["arrowLeft", "←"],
+  ["plus", "✚"],
+  ["star", "☆"],
+  ["cylinder", "▭"],
+  ["cube", "◫"],
+  ["cloud", "☁"],
+  ["heart", "♡"],
+  ["smile", "☺"],
+  ["sun", "☼"],
+  ["moon", "◐"],
+  ["arc", "◜"],
+  ["brace", "❬"],
+  ["frame", "▣"],
+  ["target", "◎"],
+  ["no", "⊘"],
+  ["crosshair", "⊕"],
+  ["lightning", "ϟ"],
+  ["callout", "▱"],
+  ["pie", "◔"],
+];
+
+const ACTIVE_SHAPE_NAMES = new Set([
+  "rect",
+  "roundRect",
+  "ellipse",
+  "triangle",
+  "rightTriangle",
+  "diamond",
+  "pentagon",
+  "hexagon",
+  "octagon",
+  "parallelogram",
+  "trapezoid",
+  "chevron",
+  "arrowRight",
+  "arrowLeft",
+  "plus",
+  "star",
+  "cloud",
+  "heart",
+  "smile",
+  "sun",
+]);
+
+export const ACTIVE_SHAPE_TOOLS = SHAPE_TOOLS.filter(([shape]) => ACTIVE_SHAPE_NAMES.has(shape));
+
+export const STEP_LABELS = {
+  queued: "대기 중",
+  planning: "기획 중",
+  "writing-slides": "슬라이드 작성 중",
+  "composing-visuals": "시각 요소 구성 중",
+  saving: "저장 중",
+  "completed-local": "완료: 로컬 생성",
+  "completed-openai": "완료: OpenAI 생성",
+  failed: "실패",
+};

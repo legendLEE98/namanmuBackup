@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820" role="img" aria-labelledby="title desc">
+  <title id="title">Prompt Presentation Studio 기술 스택과 동작 흐름</title>
+  <desc id="desc">프롬프트 입력부터 AI 생성, JSON 문서 저장, Konva 웹 에디터, export까지 이어지는 아키텍처 다이어그램</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#17202a" flood-opacity="0.16"/>
+    </filter>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#235160"/>
+    </marker>
+    <linearGradient id="headerGradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#235160"/>
+      <stop offset="1" stop-color="#c64f3b"/>
+    </linearGradient>
+    <style>
+      .bg { fill: #eef2f6; }
+      .panel { fill: #ffffff; stroke: #d9e0e8; stroke-width: 1.5; filter: url(#shadow); }
+      .card { fill: #ffffff; stroke: #d9e0e8; stroke-width: 1.4; }
+      .card-soft { fill: #f7f9fb; stroke: #d9e0e8; stroke-width: 1.4; }
+      .title { font: 800 34px "Segoe UI", Arial, sans-serif; fill: #ffffff; }
+      .subtitle { font: 500 16px "Segoe UI", Arial, sans-serif; fill: #eaf1f6; }
+      .section { font: 800 22px "Segoe UI", Arial, sans-serif; fill: #16212f; }
+      .label { font: 800 17px "Segoe UI", Arial, sans-serif; fill: #16212f; }
+      .body { font: 500 14px "Segoe UI", Arial, sans-serif; fill: #586170; }
+      .small { font: 700 12px "Segoe UI", Arial, sans-serif; fill: #647184; }
+      .mono { font: 700 13px Consolas, "Courier New", monospace; fill: #235160; }
+      .pill { fill: #e7eef5; stroke: #d7dee8; stroke-width: 1; }
+      .pill-text { font: 800 13px "Segoe UI", Arial, sans-serif; fill: #163944; }
+      .accent { fill: #c64f3b; }
+      .primary { fill: #235160; }
+      .line { stroke: #235160; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #9aa9b7; stroke-width: 2; stroke-dasharray: 8 7; fill: none; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1280" height="820"/>
+  <rect x="42" y="36" width="1196" height="748" rx="18" class="panel"/>
+
+  <rect x="42" y="36" width="1196" height="118" rx="18" fill="url(#headerGradient)"/>
+  <path d="M42 136 H1238 V154 H42 Z" fill="url(#headerGradient)"/>
+  <text x="78" y="88" class="title">Prompt Presentation Studio</text>
+  <text x="80" y="122" class="subtitle">프롬프트 기반 PPT 초안 생성 + React/Konva 웹 편집기 + PPTX/PNG/PDF/JSON export</text>
+
+  <text x="78" y="202" class="section">기술 스택</text>
+  <rect x="78" y="224" width="250" height="198" rx="12" class="card-soft"/>
+  <text x="104" y="258" class="label">Frontend</text>
+  <rect x="104" y="276" width="86" height="28" rx="14" class="pill"/>
+  <text x="125" y="295" class="pill-text">React</text>
+  <rect x="198" y="276" width="72" height="28" rx="14" class="pill"/>
+  <text x="218" y="295" class="pill-text">Vite</text>
+  <rect x="104" y="314" width="83" height="28" rx="14" class="pill"/>
+  <text x="122" y="333" class="pill-text">Konva</text>
+  <rect x="196" y="314" width="105" height="28" rx="14" class="pill"/>
+  <text x="212" y="333" class="pill-text">react-konva</text>
+  <text x="104" y="372" class="body">Stage, Layer, Transformer로</text>
+  <text x="104" y="394" class="body">웹 PPT 편집 화면을 렌더링</text>
+
+  <rect x="356" y="224" width="250" height="198" rx="12" class="card-soft"/>
+  <text x="382" y="258" class="label">Backend</text>
+  <rect x="382" y="276" width="86" height="28" rx="14" class="pill"/>
+  <text x="409" y="295" class="pill-text">Node</text>
+  <rect x="476" y="276" width="88" height="28" rx="14" class="pill"/>
+  <text x="499" y="295" class="pill-text">HTTP</text>
+  <text x="382" y="334" class="body">내장 http 서버가 API와</text>
+  <text x="382" y="356" class="body">빌드된 dist 앱을 함께 서빙</text>
+  <text x="382" y="394" class="mono">server.mjs</text>
+
+  <rect x="634" y="224" width="250" height="198" rx="12" class="card-soft"/>
+  <text x="660" y="258" class="label">AI / Document</text>
+  <rect x="660" y="276" width="104" height="28" rx="14" class="pill"/>
+  <text x="676" y="295" class="pill-text">OpenAI API</text>
+  <rect x="772" y="276" width="74" height="28" rx="14" class="pill"/>
+  <text x="795" y="295" class="pill-text">JSON</text>
+  <text x="660" y="334" class="body">OPENAI_API_KEY가 있으면</text>
+  <text x="660" y="356" class="body">Structured Outputs 사용</text>
+  <text x="660" y="394" class="body">없으면 로컬 생성기 사용</text>
+
+  <rect x="912" y="224" width="250" height="198" rx="12" class="card-soft"/>
+  <text x="938" y="258" class="label">Export / Storage</text>
+  <rect x="938" y="276" width="72" height="28" rx="14" class="pill"/>
+  <text x="958" y="295" class="pill-text">PPTX</text>
+  <rect x="1018" y="276" width="65" height="28" rx="14" class="pill"/>
+  <text x="1038" y="295" class="pill-text">PNG</text>
+  <rect x="1091" y="276" width="58" height="28" rx="14" class="pill"/>
+  <text x="1108" y="295" class="pill-text">PDF</text>
+  <text x="938" y="334" class="body">PresentationDocument JSON을</text>
+  <text x="938" y="356" class="body">파일로 저장하고 export 생성</text>
+  <text x="938" y="394" class="mono">data/presentations/*.json</text>
+
+  <text x="78" y="478" class="section">동작 흐름</text>
+
+  <rect x="78" y="506" width="176" height="96" rx="12" class="card"/>
+  <circle cx="106" cy="534" r="12" class="primary"/>
+  <text x="128" y="539" class="label">1. Prompt</text>
+  <text x="104" y="568" class="body">주제, 청중, 시간,</text>
+  <text x="104" y="589" class="body">톤, 참고자료 입력</text>
+
+  <path class="line" d="M258 554 H316"/>
+
+  <rect x="324" y="506" width="176" height="96" rx="12" class="card"/>
+  <circle cx="352" cy="534" r="12" class="accent"/>
+  <text x="374" y="539" class="label">2. Generate</text>
+  <text x="350" y="568" class="body">OpenAI 또는 로컬</text>
+  <text x="350" y="589" class="body">생성기로 초안 생성</text>
+
+  <path class="line" d="M504 554 H562"/>
+
+  <rect x="570" y="506" width="176" height="96" rx="12" class="card"/>
+  <circle cx="598" cy="534" r="12" class="primary"/>
+  <text x="620" y="539" class="label">3. JSON Model</text>
+  <text x="596" y="568" class="body">슬라이드, 객체, 대본,</text>
+  <text x="596" y="589" class="body">키워드, AI 제안 저장</text>
+
+  <path class="line" d="M750 554 H808"/>
+
+  <rect x="816" y="506" width="176" height="96" rx="12" class="card"/>
+  <circle cx="844" cy="534" r="12" class="accent"/>
+  <text x="866" y="539" class="label">4. Konva Editor</text>
+  <text x="842" y="568" class="body">Stage에서 선택, 이동,</text>
+  <text x="842" y="589" class="body">리사이즈, 회전, 수정</text>
+
+  <path class="line" d="M996 554 H1054"/>
+
+  <rect x="1062" y="506" width="176" height="96" rx="12" class="card"/>
+  <circle cx="1090" cy="534" r="12" class="primary"/>
+  <text x="1112" y="539" class="label">5. Export</text>
+  <text x="1088" y="568" class="body">PPTX, PNG, PDF,</text>
+  <text x="1088" y="589" class="body">JSON으로 다운로드</text>
+
+  <path class="dash" d="M904 608 C904 674 658 684 658 608"/>
+  <text x="700" y="674" class="small">편집 결과는 같은 PresentationDocument JSON에 반영되고 저장 API로 유지됩니다.</text>
+
+  <rect x="78" y="706" width="1084" height="42" rx="10" fill="#f7f9fb" stroke="#d9e0e8"/>
+  <text x="104" y="733" class="small">핵심 파일: src/App.jsx · server.mjs · lib/openai-generator.mjs · lib/local-generator.mjs · lib/pptx.mjs · lib/schema.mjs</text>
+</svg>

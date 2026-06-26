@@ -1,0 +1,18 @@
+{
+  "name": "prompt-presentation-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "backend:start": "npm --workspace backend run start",
+    "frontend:dev": "npm --workspace frontend run dev",
+    "frontend:build": "npm --workspace frontend run build",
+    "frontend:typecheck": "npm --workspace frontend run typecheck",
+    "build": "npm run frontend:build",
+    "test": "npm --workspace backend run test"
+  }
+}

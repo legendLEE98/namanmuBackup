@@ -1,0 +1,26 @@
+{
+  "name": "@prompt-presentation-studio/frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5174",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fortawesome/free-solid-svg-icons": "^7.3.0",
+    "@fortawesome/react-fontawesome": "^3.3.1",
+    "konva": "^10.3.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-konva": "^19.2.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.5.2",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}
