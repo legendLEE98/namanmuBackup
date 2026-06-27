@@ -6,8 +6,11 @@ import type { DataSource } from "typeorm";
 import { z } from "zod";
 
 const referenceExtractPayloadSchema = z.object({
+  jobId: z.string().min(1),
+  projectId: z.string().min(1),
   files: z.array(
     z.object({
+      fileId: z.string().min(1),
       originalName: z.string().min(1),
       mimeType: z.string().min(1),
       contentBase64: z.string().min(1)
@@ -15,41 +18,48 @@ const referenceExtractPayloadSchema = z.object({
   )
 });
 
-type ReferenceExtractPayload = z.infer<typeof referenceExtractPayloadSchema>;
-
-interface ClaimedJobRow {
-  job_id: string;
-  project_id: string;
-  progress: number;
-  payload: unknown;
-}
-
-export async function processNextReferenceExtractJob(
+export async function processReferenceExtractJob(
   dataSource: DataSource,
-  pythonWorkerUrl: string
-): Promise<Job | null> {
-  const job = await claimNextReferenceExtractJob(dataSource);
-  if (!job) {
-    return null;
-  }
+  pythonWorkerUrl: string,
+  rawPayload: unknown
+): Promise<Job> {
+  const payloadResult = referenceExtractPayloadSchema.safeParse(rawPayload);
+  if (!payloadResult.success) {
+    const jobId =
+      rawPayload &&
+      typeof rawPayload === "object" &&
+      "jobId" in rawPayload &&
+      typeof rawPayload.jobId === "string"
+        ? rawPayload.jobId
+        : "";
 
-  let payload: ReferenceExtractPayload;
-  try {
-    payload = referenceExtractPayloadSchema.parse(job.payload);
-  } catch (error) {
+    if (!jobId) {
+      throw new Error(payloadResult.error.message);
+    }
+
     return failJob(
       dataSource,
-      job.job_id,
-      job.progress,
+      jobId,
+      0,
       "REFERENCE_EXTRACT_PAYLOAD_INVALID",
-      error instanceof Error ? error.message : "Invalid reference extract payload."
+      payloadResult.error.message
     );
   }
 
+  const payload = payloadResult.data;
+  await updateJob(dataSource, payload.jobId, {
+    status: "running",
+    progress: 10,
+    message: "Reference extraction running.",
+    result: null,
+    error: null
+  });
+
   const form = new FormData();
-  form.append("project_id", job.project_id);
+  form.append("project_id", payload.projectId);
 
   for (const file of payload.files) {
+    form.append("file_ids", file.fileId);
     form.append(
       "files",
       new Blob([Buffer.from(file.contentBase64, "base64")], {
@@ -61,7 +71,7 @@ export async function processNextReferenceExtractJob(
 
   let response: Response;
   try {
-    response = await fetch(workerUrl(pythonWorkerUrl, "/api/extract"), {
+    response = await fetch(workerUrl(pythonWorkerUrl, "/documents/parse"), {
       method: "POST",
       body: form,
       signal: AbortSignal.timeout(120_000)
@@ -69,8 +79,8 @@ export async function processNextReferenceExtractJob(
   } catch (error) {
     return failJob(
       dataSource,
-      job.job_id,
-      job.progress,
+      payload.jobId,
+      10,
       "PYTHON_WORKER_EXTRACT_UNAVAILABLE",
       error instanceof Error ? error.message : "Python worker unavailable."
     );
@@ -80,8 +90,8 @@ export async function processNextReferenceExtractJob(
     const message = (await response.text()) || "Python worker extraction failed.";
     return failJob(
       dataSource,
-      job.job_id,
-      job.progress,
+      payload.jobId,
+      10,
       "PYTHON_WORKER_EXTRACT_FAILED",
       message
     );
@@ -91,7 +101,7 @@ export async function processNextReferenceExtractJob(
     const workerPayload = referenceExtractWorkerResponseSchema.parse(
       await response.json()
     );
-    return updateJob(dataSource, job.job_id, {
+    return updateJob(dataSource, payload.jobId, {
       status: "succeeded",
       progress: 100,
       message: "Reference extraction completed.",
@@ -101,39 +111,14 @@ export async function processNextReferenceExtractJob(
   } catch (error) {
     return failJob(
       dataSource,
-      job.job_id,
-      job.progress,
+      payload.jobId,
+      10,
       "PYTHON_WORKER_EXTRACT_INVALID_RESPONSE",
       error instanceof Error
         ? error.message
         : "Python worker returned invalid extraction response."
     );
   }
-}
-
-async function claimNextReferenceExtractJob(
-  dataSource: DataSource
-): Promise<ClaimedJobRow | null> {
-  const rows = await dataSource.query(`
-    WITH next_job AS (
-      SELECT job_id
-      FROM jobs
-      WHERE type = 'reference-extract' AND status = 'queued'
-      ORDER BY created_at ASC
-      FOR UPDATE SKIP LOCKED
-      LIMIT 1
-    )
-    UPDATE jobs
-    SET status = 'running',
-        progress = 10,
-        message = 'Reference extraction running.',
-        updated_at = now()
-    FROM next_job
-    WHERE jobs.job_id = next_job.job_id
-    RETURNING jobs.job_id, jobs.project_id, jobs.progress, jobs.payload
-  `);
-
-  return rows[0] ?? null;
 }
 
 async function failJob(
@@ -187,6 +172,10 @@ async function updateJob(
     `,
     [jobId, patch.status, patch.progress, patch.message, patch.result, patch.error]
   );
+
+  if (!rows[0]) {
+    throw new Error(`Job not found: ${jobId}`);
+  }
 
   return {
     ...rows[0],

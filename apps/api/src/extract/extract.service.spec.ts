@@ -49,7 +49,7 @@ describe("ExtractService", () => {
     Object.assign(process.env, validEnv);
   });
 
-  it("enqueues reference extraction for the background worker", async () => {
+  it("creates a DB job and enqueues the BullMQ reference extraction job", async () => {
     const job: Job = {
       jobId: "job-1",
       projectId: "project-a",
@@ -63,10 +63,12 @@ describe("ExtractService", () => {
       updatedAt: "2026-06-27T00:00:00.000Z"
     };
     const jobsService = {
-      create: vi.fn(async () => job)
+      create: vi.fn(async () => job),
+      update: vi.fn()
     } as unknown as JobsService;
+    const enqueueJob = vi.fn(async () => undefined);
 
-    const result = await new ExtractService(jobsService).extract(
+    const result = await new ExtractService(jobsService, enqueueJob).extract(
       [
         {
           originalname: "sample.txt",
@@ -84,12 +86,27 @@ describe("ExtractService", () => {
       payload: {
         files: [
           {
+            fileId: expect.stringMatching(/^file_/),
             originalName: "sample.txt",
             mimeType: "text/plain",
             contentBase64: Buffer.from("hello").toString("base64")
           }
         ]
       }
+    });
+    expect(enqueueJob).toHaveBeenCalledWith({
+      driver: "bullmq",
+      redisUrl: "redis://localhost:6379",
+      jobId: "job-1",
+      projectId: "project-a",
+      files: [
+        {
+          fileId: expect.stringMatching(/^file_/),
+          originalName: "sample.txt",
+          mimeType: "text/plain",
+          contentBase64: Buffer.from("hello").toString("base64")
+        }
+      ]
     });
   });
 });
