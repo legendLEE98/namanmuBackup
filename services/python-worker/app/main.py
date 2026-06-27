@@ -6,6 +6,14 @@ from typing import Literal
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
+from app.audio.transcribe import (
+    AudioTranscribeRequest,
+    AudioTranscribeResponse,
+    AudioTranscriptionError,
+    SttProviderDependency,
+    to_http_exception,
+    transcribe_rehearsal_audio,
+)
 from app.config import load_config
 
 
@@ -68,6 +76,17 @@ def extract_reference(payload: ReferenceExtractRequest) -> ReferenceExtractRespo
         projectId=payload.project_id,
         text=f"stub extraction for {payload.file_id} ({payload.mime_type})",
     )
+
+
+@app.post("/audio/transcribe", response_model=AudioTranscribeResponse)
+def transcribe_audio(
+    payload: AudioTranscribeRequest,
+    provider: SttProviderDependency,
+) -> AudioTranscribeResponse:
+    try:
+        return transcribe_rehearsal_audio(payload, provider)
+    except AudioTranscriptionError as exc:
+        raise to_http_exception(exc) from exc
 
 
 @app.post("/rehearsal/analyze", response_model=RehearsalAnalyzeResponse)
