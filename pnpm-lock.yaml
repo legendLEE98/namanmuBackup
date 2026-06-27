@@ -65,6 +65,9 @@ importers:
       '@orbit/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@orbit/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       argon2:
         specifier: ^0.44.0
         version: 0.44.0
