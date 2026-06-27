@@ -1,13 +1,16 @@
-import {
-  EnqueueJobInput,
-  InMemoryJobQueue,
-  UpdateJobInput
-} from "@orbit/job-queue";
+import type { EnqueueJobInput, UpdateJobInput } from "@orbit/job-queue";
 import { Injectable } from "@nestjs/common";
+import { InjectDataSource } from "@nestjs/typeorm";
+import type { DataSource } from "typeorm";
+import { DbJobQueue } from "./db-job-queue";
 
 @Injectable()
 export class JobsService {
-  private readonly queue = new InMemoryJobQueue();
+  private readonly queue: DbJobQueue;
+
+  constructor(@InjectDataSource() dataSource: DataSource) {
+    this.queue = new DbJobQueue(dataSource);
+  }
 
   create(input: EnqueueJobInput) {
     return this.queue.enqueue(input);

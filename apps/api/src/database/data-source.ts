@@ -2,6 +2,7 @@ import { loadOrbitConfig } from "@orbit/config";
 import { config as loadDotenv } from "dotenv";
 import { DataSource, DataSourceOptions } from "typeorm";
 import { CreateMigrationCommandCheck2026062700000 } from "./migrations/2026062700000-CreateMigrationCommandCheck";
+import { CreateJobs2026062700200 } from "./migrations/2026062700200-CreateJobs";
 
 loadDotenv({ path: "../../.env.local" });
 loadDotenv({ path: ".env.local" });
@@ -13,7 +14,10 @@ export const databaseOptions: DataSourceOptions = {
   type: "postgres",
   url: config.DATABASE_URL,
   entities: [],
-  migrations: [CreateMigrationCommandCheck2026062700000],
+  migrations: [
+    CreateMigrationCommandCheck2026062700000,
+    CreateJobs2026062700200
+  ],
   migrationsTableName: "typeorm_migrations",
   synchronize: false,
   logging: config.NODE_ENV === "development"
