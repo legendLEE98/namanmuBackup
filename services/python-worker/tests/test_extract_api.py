@@ -15,7 +15,7 @@ from app.extraction import (
 from tests.test_config import VALID_ENV
 
 
-def test_extract_uploads_returns_personal_repo_payload(monkeypatch) -> None:
+def test_documents_parse_returns_extraction_payload(monkeypatch) -> None:
     def fake_extract_file(source_path: Path, config: object) -> ExtractionResult:
         return ExtractionResult(
             source_path=source_path,
@@ -72,14 +72,15 @@ def test_extract_uploads_returns_personal_repo_payload(monkeypatch) -> None:
 
     client = TestClient(api_module.app)
     response = client.post(
-        "/api/extract",
+        "/documents/parse",
+        data={"project_id": "project-a", "file_ids": "file-1"},
         files=[("files", ("sample.png", b"fake image bytes", "image/png"))],
     )
 
     assert response.status_code == 200
     assert response.json()["files"][0] == {
-        "projectId": "default",
-        "referenceDocumentId": None,
+        "projectId": "project-a",
+        "referenceDocumentId": "file-1",
         "fileName": "sample.png",
         "kind": "image",
         "status": "succeeded",
@@ -98,7 +99,7 @@ def test_extract_uploads_returns_personal_repo_payload(monkeypatch) -> None:
         "keywordStatus": "succeeded",
         "keywordMessage": "",
         "indexingStatus": "skipped",
-        "indexingMessage": "Team repository extract screen skips personal-repo DB indexing.",
+        "indexingMessage": "Reference indexing is handled by the RAG search branch.",
         "chunkCount": 0,
         "sections": [
             {
