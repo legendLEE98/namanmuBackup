@@ -111,9 +111,21 @@ DB migration 변경 시:
 
 ```bash
 docker compose up -d postgres
-pnpm db:migration:run
-pnpm db:migration:revert
+corepack pnpm db:migration:run
+docker compose exec postgres psql -U orbit -d orbit -c "\dt migration_command_checks"
+corepack pnpm db:migration:revert
+docker compose exec postgres psql -U orbit -d orbit -c "select to_regclass('public.migration_command_checks');"
 ```
+
+패키지 직접 실행도 가능합니다.
+
+```bash
+corepack pnpm --filter api migration:run
+corepack pnpm --filter api migration:revert
+corepack pnpm --filter api migration:generate -- src/database/migrations/NextMigration
+```
+
+현재 샘플 migration은 `migration_command_checks` 테이블 생성/삭제와 pgvector extension 연결만 검증합니다. 실제 도메인 테이블 migration은 후속 이슈에서 추가합니다.
 
 ## Git 브랜치 전략
 
