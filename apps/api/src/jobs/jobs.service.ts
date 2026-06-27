@@ -1,4 +1,8 @@
-import { EnqueueJobInput, InMemoryJobQueue } from "@orbit/job-queue";
+import {
+  EnqueueJobInput,
+  InMemoryJobQueue,
+  UpdateJobInput
+} from "@orbit/job-queue";
 import { Injectable } from "@nestjs/common";
 
 @Injectable()
@@ -12,5 +16,8 @@ export class JobsService {
   get(jobId: string) {
     return this.queue.get(jobId);
   }
-}
 
+  update(jobId: string, patch: UpdateJobInput) {
+    return this.queue.update(jobId, patch);
+  }
+}

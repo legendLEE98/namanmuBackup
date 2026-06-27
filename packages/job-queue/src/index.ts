@@ -8,8 +8,13 @@ export interface EnqueueJobInput {
 
 export interface JobQueuePort {
   enqueue(input: EnqueueJobInput): Promise<Job>;
+  update(jobId: string, patch: UpdateJobInput): Promise<Job | null>;
   get(jobId: string): Promise<Job | null>;
 }
+
+export type UpdateJobInput = Partial<
+  Pick<Job, "status" | "progress" | "message" | "result" | "error">
+>;
 
 export class InMemoryJobQueue implements JobQueuePort {
   private readonly jobs = new Map<string, Job>();
@@ -38,6 +43,21 @@ export class InMemoryJobQueue implements JobQueuePort {
   async get(jobId: string): Promise<Job | null> {
     return this.jobs.get(jobId) ?? null;
   }
+
+  async update(jobId: string, patch: UpdateJobInput): Promise<Job | null> {
+    const current = this.jobs.get(jobId);
+    if (!current) {
+      return null;
+    }
+
+    const job = jobSchema.parse({
+      ...current,
+      ...patch,
+      updatedAt: nowIso()
+    });
+    this.jobs.set(jobId, job);
+    return job;
+  }
 }
 
 export class BullMqJobQueue extends InMemoryJobQueue {
@@ -50,6 +70,10 @@ export class SqsJobQueue implements JobQueuePort {
   }
 
   async get(_jobId: string): Promise<Job | null> {
+    throw new Error("SqsJobQueue adapter is not implemented yet.");
+  }
+
+  async update(_jobId: string, _patch: UpdateJobInput): Promise<Job | null> {
     throw new Error("SqsJobQueue adapter is not implemented yet.");
   }
 }
