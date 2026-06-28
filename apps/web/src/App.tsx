@@ -1,17 +1,16 @@
-import { createDemoDeck } from "@orbit/editor-core";
-import { demoIds, type Job } from "@orbit/shared";
-import { useQuery } from "@tanstack/react-query";
-import { Activity, Database, FileUp, Play, Radio, RefreshCw } from "lucide-react";
+import { type Job } from "@orbit/shared";
+import {
+  FileUp,
+  FolderOpen,
+  PanelLeftClose,
+  PanelLeftOpen,
+  SendHorizontal,
+} from "lucide-react";
+import orbitLogo from "./assets/orbit-logo.png";
 import { AuthPanel } from "./features/auth/AuthPanel";
-import { ProjectAssetWorkspace } from "./features/projects/ProjectAssetWorkspace";
-import type { ChangeEvent, DragEvent, ReactNode } from "react";
+import { ProjectGallery } from "./features/projects/ProjectGallery";
+import type { ChangeEvent, DragEvent, FormEvent, ReactNode } from "react";
 import { lazy, Suspense, useMemo, useRef, useState } from "react";
-
-interface HealthResponse {
-  status: string;
-  app: string;
-  demo: typeof demoIds;
-}
 
 type UploadFile = {
   id: string;
@@ -57,7 +56,12 @@ type PresentationKeyword = {
   priority: "high" | "medium" | "low" | string;
 };
 
-const demoDeck = createDemoDeck();
+type ChatMessage = {
+  id: string;
+  role: "assistant" | "user";
+  text: string;
+};
+
 const EditorShell = lazy(() =>
   import("./features/editor/EditorShell").then((module) => ({
     default: module.EditorShell
@@ -79,14 +83,6 @@ const accept = [
   ".docx",
   ".pptx"
 ].join(",");
-
-async function fetchHealth(): Promise<HealthResponse> {
-  const response = await fetch("/api/health");
-  if (!response.ok) {
-    throw new Error("API health check failed");
-  }
-  return response.json() as Promise<HealthResponse>;
-}
 
 export async function pollExtractJob(
   jobId: string,
@@ -131,31 +127,102 @@ export function App() {
   const [view, setView] = useState<"console" | "upload" | "project-assets" | "editor">(
     "console"
   );
-  const previewText =
-    demoDeck.slides[0]?.elements.find((element) => element.type === "text")?.props.text ?? "";
-
-  const health = useQuery({
-    queryKey: ["health"],
-    queryFn: fetchHealth,
-    retry: false
-  });
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
   if (view === "upload") {
-    return <UploadView />;
+    return (
+      <SharedSidebarShell
+        currentView="upload"
+        isCollapsed={isSidebarCollapsed}
+        onChangeView={setView}
+        onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
+      >
+        <UploadView />
+      </SharedSidebarShell>
+    );
   }
 
   if (view === "project-assets") {
-    return <ProjectAssetWorkspace />;
+    return (
+      <SharedSidebarShell
+        currentView="project-assets"
+        isCollapsed={isSidebarCollapsed}
+        onChangeView={setView}
+        onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
+      >
+        <ProjectGallery
+          onOpenEditor={(projectId) => {
+            setActiveProjectId(projectId);
+            setView("editor");
+          }}
+        />
+      </SharedSidebarShell>
+    );
   }
 
   if (view === "editor") {
     return (
-      <Suspense fallback={<EditorLoadingFallback />}>
-        <EditorShell />
-      </Suspense>
+      <SharedSidebarShell
+        currentView="editor"
+        isCollapsed={isSidebarCollapsed}
+        onChangeView={setView}
+        onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
+      >
+        <Suspense fallback={<EditorLoadingFallback />}>
+          <EditorShell projectId={activeProjectId ?? undefined} />
+        </Suspense>
+      </SharedSidebarShell>
     );
   }
 
+  return (
+    <SharedSidebarShell
+      currentView="console"
+      isCollapsed={isSidebarCollapsed}
+      onChangeView={setView}
+      onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
+    >
+      <HomeChatView />
+    </SharedSidebarShell>
+  );
+
+  return (
+    <main className="orbit-home-shell">
+      <aside className="orbit-sidebar" aria-label="Orbit navigation">
+        <div className="orbit-sidebar-brand">
+          <img alt="Orbit" src={orbitLogo} />
+          <strong>Orbit</strong>
+        </div>
+
+        <nav className="orbit-sidebar-list" aria-label="Primary">
+          <button type="button" onClick={() => setView("upload")}>
+            <FileUp size={18} />
+            <span>파일 업로드</span>
+          </button>
+          <button type="button" onClick={() => setView("editor")}>
+            <span>AI 생성</span>
+          </button>
+          <button type="button" onClick={() => setView("project-assets")}>
+            <FolderOpen size={18} />
+            <span>프로젝트 불러오기</span>
+          </button>
+        </nav>
+      </aside>
+
+      <section className="orbit-home-main">
+        <div className="orbit-home-copy">
+          <p className="eyebrow">workspace</p>
+          <h1>Orbit</h1>
+          <p>발표 자료를 업로드하고, AI로 초안을 만들고, 저장된 프로젝트를 이어서 작업하세요.</p>
+        </div>
+
+        <AuthPanel />
+      </section>
+    </main>
+  );
+
+  /*
   return (
     <main className="app-shell">
       <section className="topbar">
@@ -237,6 +304,124 @@ export function App() {
         </div>
       </section>
     </main>
+  );
+  */
+}
+
+function SharedSidebarShell(props: {
+  children: ReactNode;
+  currentView: "console" | "upload" | "project-assets" | "editor";
+  isCollapsed: boolean;
+  onChangeView: (view: "console" | "upload" | "project-assets" | "editor") => void;
+  onToggleCollapsed: () => void;
+}) {
+  return (
+    <main className={`orbit-home-shell${props.isCollapsed ? " sidebar-collapsed" : ""}`}>
+      <aside className="orbit-sidebar" aria-label="Orbit navigation">
+        <div className="orbit-sidebar-header">
+          <button
+            className={`orbit-sidebar-brand${props.currentView === "console" ? " active" : ""}`}
+            type="button"
+            onClick={() => props.onChangeView("console")}
+            title="Orbit 홈"
+          >
+            <img alt="Orbit" src={orbitLogo} />
+            <strong>Orbit</strong>
+          </button>
+          <button
+            className="orbit-sidebar-toggle"
+            type="button"
+            onClick={props.onToggleCollapsed}
+            aria-label={props.isCollapsed ? "사이드바 펼치기" : "사이드바 접기"}
+            title={props.isCollapsed ? "사이드바 펼치기" : "사이드바 접기"}
+          >
+            {props.isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
+        </div>
+
+        <nav className="orbit-sidebar-list" aria-label="Primary">
+          <button
+            className={props.currentView === "upload" ? "active" : ""}
+            type="button"
+            onClick={() => props.onChangeView("upload")}
+          >
+            <FileUp size={18} />
+            <span>파일 업로드</span>
+          </button>
+          <button
+            className={props.currentView === "project-assets" ? "active" : ""}
+            type="button"
+            onClick={() => props.onChangeView("project-assets")}
+          >
+            <FolderOpen size={18} />
+            <span>프로젝트 불러오기</span>
+          </button>
+        </nav>
+      </aside>
+
+      <section className="orbit-route-content">{props.children}</section>
+    </main>
+  );
+}
+
+function HomeChatView() {
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: "welcome",
+      role: "assistant" as const,
+      text: "안녕하세요. 발표 자료 초안, 업로드한 파일 요약, 프로젝트 구성에 대해 물어보세요."
+    }
+  ]);
+  const [draft, setDraft] = useState("");
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = draft.trim();
+    if (!text) return;
+
+    setMessages((current) => [
+      ...current,
+      { id: `user-${Date.now()}`, role: "user", text },
+      {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        text: "아직 GPT API 연결 전이라 실제 답변은 붙어있지 않습니다. 지금은 대화 UI와 입력 흐름만 확인할 수 있어요."
+      }
+    ]);
+    setDraft("");
+  }
+
+  return (
+    <section className="orbit-chat-home">
+      <div className="orbit-chat-heading">
+        <p className="eyebrow">workspace</p>
+        <h1>Orbit</h1>
+        <p>발표 자료를 업로드하고, AI에게 초안과 흐름을 물어보세요.</p>
+      </div>
+
+      <div className="orbit-chat-panel">
+        <div className="orbit-chat-messages" aria-live="polite">
+          {messages.map((message) => (
+            <div className={`orbit-chat-message ${message.role}`} key={message.id}>
+              <span>{message.role === "assistant" ? "Orbit" : "나"}</span>
+              <p>{message.text}</p>
+            </div>
+          ))}
+        </div>
+
+        <form className="orbit-chat-composer" onSubmit={handleSubmit}>
+          <input
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="Orbit에게 메시지 보내기"
+            aria-label="Orbit에게 메시지 보내기"
+          />
+          <button type="submit" aria-label="메시지 보내기" disabled={!draft.trim()}>
+            <SendHorizontal size={18} />
+          </button>
+        </form>
+      </div>
+    </section>
   );
 }
 
@@ -543,22 +728,6 @@ export function ExtractResultItem(props: { result: ExtractedFile }) {
         )}
       </div>
     </article>
-  );
-}
-
-function StatusItem(props: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="status-item">
-      {props.icon}
-      <div>
-        <span>{props.label}</span>
-        <strong>{props.value}</strong>
-      </div>
-    </div>
   );
 }
 
