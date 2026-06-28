@@ -1,26 +1,16 @@
 import { type Job } from "@orbit/shared";
 import {
-  FileUp,
   FolderOpen,
+  LogIn,
   PanelLeftClose,
   PanelLeftOpen,
-  SendHorizontal,
+  SendHorizontal
 } from "lucide-react";
+import type { FormEvent, ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import orbitLogo from "./assets/orbit-logo.png";
 import { AuthPanel } from "./features/auth/AuthPanel";
 import { ProjectGallery } from "./features/projects/ProjectGallery";
-import type { ChangeEvent, DragEvent, FormEvent, ReactNode } from "react";
-import { lazy, Suspense, useMemo, useRef, useState } from "react";
-
-type UploadFile = {
-  id: string;
-  file: File;
-};
-
-type RejectedFile = {
-  name: string;
-  reason: string;
-};
 
 type ExtractedFile = {
   fileName: string;
@@ -37,11 +27,6 @@ type ExtractedFile = {
   indexingStatus?: string;
   indexingMessage?: string;
   chunkCount?: number;
-};
-
-type ExtractResponse = {
-  files: ExtractedFile[];
-  job: Job;
 };
 
 type JobResult = {
@@ -62,27 +47,17 @@ type ChatMessage = {
   text: string;
 };
 
+type AppRoute =
+  | { name: "home"; path: "/" }
+  | { name: "login"; path: "/login" }
+  | { name: "project"; path: "/project" }
+  | { name: "project-room"; path: string; roomId: string };
+
 const EditorShell = lazy(() =>
   import("./features/editor/EditorShell").then((module) => ({
     default: module.EditorShell
   }))
 );
-const allowedExtensions = ["pdf", "docx", "pptx"];
-const allowedMimeTypes = new Set([
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-]);
-const imagePrefix = "image/";
-const accept = [
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "image/*",
-  ".pdf",
-  ".docx",
-  ".pptx"
-].join(",");
 
 export async function pollExtractJob(
   jobId: string,
@@ -122,208 +97,69 @@ export function getJobResultFiles(job: Job): ExtractedFile[] {
   return Array.isArray(result?.files) ? result.files : [];
 }
 
-// 데모 콘솔의 최상위 화면 전환을 관리한다.
 export function App() {
-  const [view, setView] = useState<"console" | "upload" | "project-assets" | "editor">(
-    "console"
-  );
+  const [route, setRoute] = useState<AppRoute>(() => parseRoute(location.pathname));
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
-  if (view === "upload") {
-    return (
-      <SharedSidebarShell
-        currentView="upload"
-        isCollapsed={isSidebarCollapsed}
-        onChangeView={setView}
-        onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
-      >
-        <UploadView />
-      </SharedSidebarShell>
-    );
-  }
+  useEffect(() => {
+    function handlePopState() {
+      setRoute(parseRoute(location.pathname));
+    }
 
-  if (view === "project-assets") {
-    return (
-      <SharedSidebarShell
-        currentView="project-assets"
-        isCollapsed={isSidebarCollapsed}
-        onChangeView={setView}
-        onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
-      >
-        <ProjectGallery
-          onOpenEditor={(projectId) => {
-            setActiveProjectId(projectId);
-            setView("editor");
-          }}
-        />
-      </SharedSidebarShell>
-    );
-  }
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
-  if (view === "editor") {
-    return (
-      <SharedSidebarShell
-        currentView="editor"
-        isCollapsed={isSidebarCollapsed}
-        onChangeView={setView}
-        onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
-      >
-        <Suspense fallback={<EditorLoadingFallback />}>
-          <EditorShell projectId={activeProjectId ?? undefined} />
-        </Suspense>
-      </SharedSidebarShell>
-    );
+  function navigate(path: string) {
+    history.pushState(null, "", path);
+    setRoute(parseRoute(path));
   }
 
   return (
     <SharedSidebarShell
-      currentView="console"
+      currentRoute={route.name}
       isCollapsed={isSidebarCollapsed}
-      onChangeView={setView}
+      onNavigate={navigate}
       onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
     >
-      <HomeChatView />
+      {route.name === "login" ? (
+        <LoginRoute />
+      ) : route.name === "project" ? (
+        <ProjectGallery
+          onOpenEditor={(projectId) => {
+            navigate(`/project/${encodeURIComponent(projectId)}`);
+          }}
+        />
+      ) : route.name === "project-room" ? (
+        <Suspense fallback={<EditorLoadingFallback />}>
+          <EditorShell projectId={route.roomId} />
+        </Suspense>
+      ) : (
+        <HomeChatView />
+      )}
     </SharedSidebarShell>
   );
-
-  return (
-    <main className="orbit-home-shell">
-      <aside className="orbit-sidebar" aria-label="Orbit navigation">
-        <div className="orbit-sidebar-brand">
-          <img alt="Orbit" src={orbitLogo} />
-          <strong>Orbit</strong>
-        </div>
-
-        <nav className="orbit-sidebar-list" aria-label="Primary">
-          <button type="button" onClick={() => setView("upload")}>
-            <FileUp size={18} />
-            <span>파일 업로드</span>
-          </button>
-          <button type="button" onClick={() => setView("editor")}>
-            <span>AI 생성</span>
-          </button>
-          <button type="button" onClick={() => setView("project-assets")}>
-            <FolderOpen size={18} />
-            <span>프로젝트 불러오기</span>
-          </button>
-        </nav>
-      </aside>
-
-      <section className="orbit-home-main">
-        <div className="orbit-home-copy">
-          <p className="eyebrow">workspace</p>
-          <h1>Orbit</h1>
-          <p>발표 자료를 업로드하고, AI로 초안을 만들고, 저장된 프로젝트를 이어서 작업하세요.</p>
-        </div>
-
-        <AuthPanel />
-      </section>
-    </main>
-  );
-
-  /*
-  return (
-    <main className="app-shell">
-      <section className="topbar">
-        <div>
-          <p className="eyebrow">platform-core</p>
-          <h1>ORBIT Demo Console</h1>
-        </div>
-        <button
-          className="icon-button"
-          type="button"
-          onClick={() => void health.refetch()}
-          aria-label="상태 새로고침"
-          title="상태 새로고침"
-        >
-          <RefreshCw size={18} />
-        </button>
-      </section>
-
-      <section className="status-strip">
-        <StatusItem
-          icon={<Activity size={20} />}
-          label="API"
-          value={health.data?.status ?? (health.isError ? "offline" : "checking")}
-        />
-        <StatusItem icon={<Database size={20} />} label="Project" value={demoIds.projectId} />
-        <StatusItem icon={<Radio size={20} />} label="Session" value={demoIds.sessionId} />
-      </section>
-
-      <section className="workspace-grid">
-        <article className="panel primary-panel">
-          <div>
-            <p className="panel-kicker">Deck</p>
-            <h2>{demoDeck.title}</h2>
-          </div>
-          <div className="slide-preview">
-            <span>{previewText}</span>
-          </div>
-          <dl className="meta-grid">
-            <div>
-              <dt>deckId</dt>
-              <dd>{demoDeck.deckId}</dd>
-            </div>
-            <div>
-              <dt>slides</dt>
-              <dd>{demoDeck.slides.length}</dd>
-            </div>
-            <div>
-              <dt>version</dt>
-              <dd>{demoDeck.version}</dd>
-            </div>
-          </dl>
-        </article>
-
-        <div className="side-column">
-          <AuthPanel />
-
-          <article className="panel task-panel">
-            <p className="panel-kicker">Sprint 1</p>
-            <h2>Core Flow</h2>
-            <div className="action-list">
-              <button type="button" onClick={() => setView("project-assets")}>
-                <Play size={18} />
-                프로젝트 생성
-              </button>
-              <button type="button" onClick={() => setView("upload")}>
-                <FileUp size={18} />
-                파일 업로드
-              </button>
-              <button type="button" onClick={() => setView("editor")}>
-                <Activity size={18} />
-                편집기 열기
-              </button>
-              <button type="button">
-                <Activity size={18} />
-                Job 상태 확인
-              </button>
-            </div>
-          </article>
-        </div>
-      </section>
-    </main>
-  );
-  */
 }
 
 function SharedSidebarShell(props: {
   children: ReactNode;
-  currentView: "console" | "upload" | "project-assets" | "editor";
+  currentRoute: AppRoute["name"];
   isCollapsed: boolean;
-  onChangeView: (view: "console" | "upload" | "project-assets" | "editor") => void;
+  onNavigate: (path: string) => void;
   onToggleCollapsed: () => void;
 }) {
+  const isProjectRoute =
+    props.currentRoute === "project" || props.currentRoute === "project-room";
+
   return (
     <main className={`orbit-home-shell${props.isCollapsed ? " sidebar-collapsed" : ""}`}>
       <aside className="orbit-sidebar" aria-label="Orbit navigation">
         <div className="orbit-sidebar-header">
           <button
-            className={`orbit-sidebar-brand${props.currentView === "console" ? " active" : ""}`}
+            className={`orbit-sidebar-brand${props.currentRoute === "home" ? " active" : ""}`}
             type="button"
-            onClick={() => props.onChangeView("console")}
-            title="Orbit 홈"
+            onClick={() => props.onNavigate("/")}
+            title="홈"
           >
             <img alt="Orbit" src={orbitLogo} />
             <strong>Orbit</strong>
@@ -341,22 +177,26 @@ function SharedSidebarShell(props: {
 
         <nav className="orbit-sidebar-list" aria-label="Primary">
           <button
-            className={props.currentView === "upload" ? "active" : ""}
+            className={isProjectRoute ? "active" : ""}
             type="button"
-            onClick={() => props.onChangeView("upload")}
-          >
-            <FileUp size={18} />
-            <span>파일 업로드</span>
-          </button>
-          <button
-            className={props.currentView === "project-assets" ? "active" : ""}
-            type="button"
-            onClick={() => props.onChangeView("project-assets")}
+            onClick={() => props.onNavigate("/project")}
           >
             <FolderOpen size={18} />
             <span>프로젝트 불러오기</span>
           </button>
         </nav>
+
+        <div className="orbit-sidebar-footer">
+          <button
+            className={props.currentRoute === "login" ? "active" : ""}
+            type="button"
+            onClick={() => props.onNavigate("/login")}
+            title="로그인"
+          >
+            <LogIn size={18} />
+            <span>로그인</span>
+          </button>
+        </div>
       </aside>
 
       <section className="orbit-route-content">{props.children}</section>
@@ -368,8 +208,8 @@ function HomeChatView() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
-      role: "assistant" as const,
-      text: "안녕하세요. 발표 자료 초안, 업로드한 파일 요약, 프로젝트 구성에 대해 물어보세요."
+      role: "assistant",
+      text: "안녕하세요. 발표 자료 초안, 프로젝트 구성, 저장 흐름에 대해 물어보세요."
     }
   ]);
   const [draft, setDraft] = useState("");
@@ -385,7 +225,7 @@ function HomeChatView() {
       {
         id: `assistant-${Date.now()}`,
         role: "assistant",
-        text: "아직 GPT API 연결 전이라 실제 답변은 붙어있지 않습니다. 지금은 대화 UI와 입력 흐름만 확인할 수 있어요."
+        text: "아직 GPT API 응답은 연결되지 않았습니다. 지금은 홈 대화 UI 흐름만 확인할 수 있습니다."
       }
     ]);
     setDraft("");
@@ -394,9 +234,9 @@ function HomeChatView() {
   return (
     <section className="orbit-chat-home">
       <div className="orbit-chat-heading">
-        <p className="eyebrow">workspace</p>
+        <p className="eyebrow">home</p>
         <h1>Orbit</h1>
-        <p>발표 자료를 업로드하고, AI에게 초안과 흐름을 물어보세요.</p>
+        <p>발표 자료를 만들고, 프로젝트를 불러오고, 이어서 편집할 수 있는 작업 공간입니다.</p>
       </div>
 
       <div className="orbit-chat-panel">
@@ -425,6 +265,19 @@ function HomeChatView() {
   );
 }
 
+function LoginRoute() {
+  return (
+    <main className="app-shell orbit-login-route">
+      <section className="orbit-login-copy">
+        <p className="eyebrow">login</p>
+        <h1>로그인</h1>
+        <p>프로젝트를 저장하고 이어서 작업하려면 계정으로 접속하세요.</p>
+      </section>
+      <AuthPanel />
+    </main>
+  );
+}
+
 function EditorLoadingFallback() {
   return (
     <main className="app-shell">
@@ -433,225 +286,6 @@ function EditorLoadingFallback() {
           <p className="eyebrow">editor</p>
           <h1>편집기를 불러오는 중</h1>
         </div>
-      </section>
-    </main>
-  );
-}
-
-function UploadView() {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploads, setUploads] = useState<UploadFile[]>([]);
-  const [rejected, setRejected] = useState<RejectedFile[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [extractError, setExtractError] = useState("");
-  const [extractJob, setExtractJob] = useState<Job | null>(null);
-  const [results, setResults] = useState<ExtractedFile[]>([]);
-
-  const totalSize = useMemo(
-    () => uploads.reduce((sum, upload) => sum + upload.file.size, 0),
-    [uploads]
-  );
-
-  const addFiles = (fileList: FileList | File[]) => {
-    const acceptedFiles: UploadFile[] = [];
-    const rejectedFiles: RejectedFile[] = [];
-
-    Array.from(fileList).forEach((file) => {
-      if (isAllowedFile(file)) {
-        acceptedFiles.push({ id: createUploadId(file), file });
-        return;
-      }
-
-      rejectedFiles.push({
-        name: file.name,
-        reason: "PDF, DOCX, PPTX 또는 이미지 파일만 업로드할 수 있습니다."
-      });
-    });
-
-    setUploads((current) => {
-      const existingIds = new Set(current.map((upload) => upload.id));
-      const nextFiles = acceptedFiles.filter((upload) => !existingIds.has(upload.id));
-
-      return [...current, ...nextFiles];
-    });
-    setRejected(rejectedFiles);
-  };
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      addFiles(event.target.files);
-    }
-
-    event.target.value = "";
-  };
-
-  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    addFiles(event.dataTransfer.files);
-  };
-
-  const removeUpload = (id: string) => {
-    setUploads((current) => current.filter((upload) => upload.id !== id));
-    setResults([]);
-    setExtractJob(null);
-    setExtractError("");
-  };
-
-  const extractText = async () => {
-    if (uploads.length === 0 || isExtracting) return;
-
-    const formData = new FormData();
-    uploads.forEach(({ file }) => formData.append("files", file));
-
-    setIsExtracting(true);
-    setExtractError("");
-    setExtractJob(null);
-    setResults([]);
-
-    try {
-      const response = await fetch("/api/extract", {
-        method: "POST",
-        body: formData
-      });
-
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || "텍스트 추출에 실패했습니다.");
-      }
-
-      const data = (await response.json()) as ExtractResponse;
-      setExtractJob(data.job);
-
-      const job = await pollExtractJob(data.job.jobId, {
-        onUpdate: setExtractJob
-      });
-
-      if (job.status === "failed") {
-        throw new Error(
-          job.error?.message || job.message || "텍스트 추출에 실패했습니다."
-        );
-      }
-
-      setResults(getJobResultFiles(job));
-    } catch (error) {
-      setExtractError(error instanceof Error ? error.message : "텍스트 추출에 실패했습니다.");
-    } finally {
-      setIsExtracting(false);
-    }
-  };
-
-  return (
-    <main className="app-shell upload-app-shell">
-      <section className="upload-panel" aria-labelledby="upload-title">
-        <div className="panel-copy">
-          <span className="eyebrow">Orbit issue #24</span>
-          <h1 id="upload-title">참고 자료 업로드</h1>
-          <p>PDF, DOCX, PPTX와 이미지 파일을 추가하고 텍스트를 추출하세요.</p>
-        </div>
-
-        <label
-          className={`drop-zone${isDragging ? " is-dragging" : ""}`}
-          onDragOver={(event) => {
-            event.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            accept={accept}
-            multiple
-            onChange={handleFileChange}
-          />
-          <span className="upload-mark" aria-hidden="true">
-            +
-          </span>
-          <span className="drop-title">파일을 끌어오거나 선택하세요</span>
-          <span className="drop-meta">PDF · DOCX · PPTX · JPG · PNG · GIF · WEBP</span>
-        </label>
-
-        <div className="upload-summary" aria-live="polite">
-          <span>{uploads.length}개 파일</span>
-          <span>{formatBytes(totalSize)}</span>
-        </div>
-
-        {rejected.length > 0 && (
-          <div className="rejection-list" role="alert">
-            {rejected.map((file) => (
-              <p key={file.name}>
-                <strong>{file.name}</strong> {file.reason}
-              </p>
-            ))}
-          </div>
-        )}
-
-        {uploads.length > 0 && (
-          <>
-            <ul className="file-list" aria-label="업로드 대기 파일">
-              {uploads.map(({ id, file }) => (
-                <li key={id}>
-                  <div>
-                    <span className="file-name">{file.name}</span>
-                    <span className="file-detail">
-                      {getExtension(file.name).toUpperCase()} · {formatBytes(file.size)}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeUpload(id)}
-                    aria-label={`${file.name} 제거`}
-                  >
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ul>
-
-            <button
-              className="extract-button"
-              type="button"
-              onClick={extractText}
-              disabled={isExtracting}
-            >
-              {isExtracting ? "텍스트 추출 중..." : "텍스트 추출"}
-            </button>
-          </>
-        )}
-
-        {extractJob && (
-          <div className="job-status" aria-live="polite">
-            <div>
-              <strong>{extractJob.status}</strong>
-              <span>{extractJob.progress}%</span>
-            </div>
-            {extractJob.message && <p>{extractJob.message}</p>}
-          </div>
-        )}
-
-        {extractError && (
-          <div className="rejection-list" role="alert">
-            <p>{extractError}</p>
-          </div>
-        )}
-
-        {results.length > 0 && (
-          <section className="result-panel" aria-labelledby="result-title">
-            <div className="result-heading">
-              <span className="eyebrow">Extraction result</span>
-              <h2 id="result-title">추출된 텍스트</h2>
-            </div>
-
-            <div className="result-list">
-              {results.map((result) => (
-                <ExtractResultItem key={result.fileName} result={result} />
-              ))}
-            </div>
-          </section>
-        )}
       </section>
     </main>
   );
@@ -731,29 +365,21 @@ export function ExtractResultItem(props: { result: ExtractedFile }) {
   );
 }
 
-function getExtension(fileName: string) {
-  return fileName.split(".").pop()?.toLowerCase() ?? "";
-}
+function parseRoute(pathname: string): AppRoute {
+  const normalizedPath = pathname.replace(/\/+$/, "") || "/";
 
-function isAllowedFile(file: File) {
-  const extension = getExtension(file.name);
-  const isAllowedDocument =
-    allowedExtensions.includes(extension) && allowedMimeTypes.has(file.type);
-  const isImage = file.type.startsWith(imagePrefix);
+  if (normalizedPath === "/login") {
+    return { name: "login", path: "/login" };
+  }
 
-  return isAllowedDocument || isImage;
-}
+  if (normalizedPath === "/project") {
+    return { name: "project", path: "/project" };
+  }
 
-function formatBytes(bytes: number) {
-  if (bytes === 0) return "0 B";
+  if (normalizedPath.startsWith("/project/")) {
+    const roomId = decodeURIComponent(normalizedPath.slice("/project/".length));
+    return { name: "project-room", path: normalizedPath, roomId };
+  }
 
-  const units = ["B", "KB", "MB", "GB"];
-  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  const value = bytes / 1024 ** index;
-
-  return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
-}
-
-function createUploadId(file: File) {
-  return `${file.name}-${file.size}-${file.lastModified}`;
+  return { name: "home", path: "/" };
 }

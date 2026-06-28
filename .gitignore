@@ -8,6 +8,7 @@ playwright-report/
 .vite/
 .next/
 .cache/
+.parcel-cache/
 
 .env
 .env.local
@@ -17,6 +18,11 @@ playwright-report/
 !.env.production.example
 
 *.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 *.tsbuildinfo
 
 .venv/
@@ -31,3 +37,25 @@ tmp/
 minio-data/
 postgres-data/
 redis-data/
+
+# Local tooling
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local Docker/database volumes
+docker-data/
+pgdata/
+redis/
+minio/
+
+# Temporary archives/backups
+*.bak
+*.backup
+*.tmp
